@@ -1,0 +1,115 @@
+* {
+    padding: 0;
+    margin: 0;
+}
+
+body{
+    background-color: black;
+}
+
+div#world {
+    position: relative;
+    display: inline-block;
+}
+
+div.row {
+    border: 0;
+    height: 30px;
+}
+
+div.row div {
+    width: 30px;
+    height: 30px;
+    display: inline-block;
+    border: 0;
+}
+
+div.brick {
+    background-color: blue;
+}
+
+div.coin {
+    background: no-repeat center/12px url('img/coin.png');
+}
+
+div.cherry {
+    background: no-repeat center/20px url('img/cherry.png');
+}
+
+div#pacman {
+    background: no-repeat center/30px url('img/pacman.gif');
+    width: 30px;
+    height: 30px;
+    position: absolute;
+}
+
+div#clyde {
+    background: no-repeat center/32px url('img/clyde.png');
+    width: 30px;
+    height: 30px;
+    position: absolute;
+}
+
+div#blinky {
+    background: no-repeat center/27px url('img/blinky.png');
+    width: 30px;
+    height: 30px;
+    position: absolute;
+}
+
+
+div#death {
+    background: no-repeat center/30px url('img/boom.gif');
+    width: 40px;
+    height: 40px;
+    position: absolute;
+    display: block;
+}
+
+#reset {
+    background: black;
+    color: white;
+    font: 16px 'Share Tech Mono', monospace;
+    border: 2px solid white;
+    height: 40px;
+    width: 124px;
+}
+
+div.empty {
+    background-color: transparent;
+}
+
+div.sidebar {
+    display: inline-block;
+    vertical-align: top;
+}
+
+div.sidebar_boxes {
+    border: 1px solid white;
+    width: 140px;
+    height: 33px;
+    color: white;
+    padding: 6px;
+    margin: 6px;
+}
+
+div.sidebar_boxes h3, div.sidebar_boxes p {
+    display: inline-block;
+    font: 18px 'Share Tech Mono', monospace;
+}
+
+div#gameover {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    margin: auto auto;
+    font: 48px 'Share Tech Mono', monospace;
+    color: white;
+    background: black;
+    border: 0;
+    text-align: center;
+    padding-top: 300px;
+    display: none;
+}
