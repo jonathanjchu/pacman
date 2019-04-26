@@ -1,3 +1,5 @@
+var loopTimer = 400;
+var loop;
 
 const mapping = {
     0: "empty",
@@ -66,6 +68,9 @@ function resetGame() {
     displayWorld();
     displayPacman();
     displayGhosts();
+    displayScore();
+
+    loop = setInterval(gameLoop, loopTimer);
 
     isLifeResetLocked = false;
 }
@@ -94,11 +99,11 @@ function resetGhostPosition() {
         x: 20,
         y: 10
     },
-    // {
-    //     name: "blinky",
-    //     x: 1,
-    //     y: 19
-    // }
+        // {
+        //     name: "blinky",
+        //     x: 1,
+        //     y: 19
+        // }
     ];
     showGhosts();
 }
@@ -214,6 +219,7 @@ function loseLife() {
 
     // lock game movement
     isLifeResetLocked = true;
+    clearInterval(loop);
 
     setTimeout(function () {
         // handle aftermath of pacman's death
@@ -234,6 +240,8 @@ function loseLife() {
 
             displayPacman();
             displayGhosts();
+
+            loop = setInterval(gameLoop, loopTimer);
         }
 
         isLifeResetLocked = false;
@@ -268,13 +276,29 @@ document.onkeydown = function (e) {
         document.getElementById("pacman").style.transform = "rotate(270deg)";
     }
 
-    // check ghost collision
+    updatePacman();
+
+}
+
+function gameLoop() {
+    if (!isLifeResetLocked) {
+        updatePacman();
+        updateGhosts();
+    }
+}
+
+function updateGhosts() {
+    moveGhosts();
+    displayGhosts();
+    displayWorld();
+
+    // check ghost collision again (in case pacman is trying to swap positions)
     if (isPacmanCollideWithGhost()) {
         loseLife();
     }
+}
 
-    moveGhosts();
-
+function updatePacman() {
     // check ghost collision again (in case pacman is trying to swap positions)
     if (isPacmanCollideWithGhost()) {
         loseLife();
@@ -294,10 +318,13 @@ document.onkeydown = function (e) {
 
     // redraw
     displayPacman();
-    displayGhosts();
     displayWorld();
     displayScore();
 }
 
+
 // draw on initialization
 resetGame();
+
+
+

@@ -7,6 +7,7 @@ function moveGhosts() {
                 break;
 
             case "clyde":
+                
                 moveGhostRandom(ghosts[i]);
                 //moveGhostTowardsPacman(ghosts[i]);
                 break;
@@ -85,9 +86,9 @@ function findPaths(start_x, start_y, end_x, end_y) {
         //console.log(path);
         // console.log("x: " + path[i].x + ", y: " + path[i].y + ", d: " + path[i].d);
 
-        if (path[i].x == start_x && path[i] == start_y) {
-            break;
-        }
+        // if (path[i].x == start_x && path[i] == start_y) {
+        //     break;
+        // }
 
         checkNextCells(path[i].x, path[i].y, path[i].d);
     }
@@ -217,4 +218,9 @@ function findAdjacentCellThatsCloser(x, y, d) {
             }
         }
     }
+}
+
+// simple distance to pacman (ignores walls)
+function getDistanceToPacman(x, y) {
+    return (Math.abs(pacman.x - x) + Math.abs(pacman.y - y));
 }
