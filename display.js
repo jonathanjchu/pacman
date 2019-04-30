@@ -5,22 +5,25 @@ function displayWorld() {
     for (var i = 0; i < world.length; i++) {
         output += "<div class='row'>";
         for (var j = 0; j < world[i].length; j++) {
+            output += "<div class='";
             switch (world[i][j]) {
                 case 3:
-                    output += "<div class='cherry'></div>";
+                    output += "cherry";
                     break;
 
                 case 2:
-                    output += "<div class='brick'></div>";
+                    output += "brick";
                     break;
 
                 case 1:
-                    output += "<div class='coin' x='" + j + "' y='" + i + "'></div>";
+                    output += "coin";
                     break;
 
                 default:
-                    output += "<div class='empty'></div>";
+                    output += "empty";
             }
+
+            output += "' x='" + j + "' y='" + i + "'></div>";
 
         }
 

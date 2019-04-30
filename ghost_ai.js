@@ -60,7 +60,8 @@ function moveGhostRandom(gh) {
 
 // move the given ghost towards pacman
 function moveGhostTowardsPacman(gh) {
-    findPaths(gh.x, gh.y, pacman.x, pacman.y);
+    findAllPaths(gh.x, gh.y, pacman.x, pacman.y);
+    
     var idx = findCellInPath(gh.x, gh.y);
 
     var nextCell = findAdjacentCellThatsCloser(path[idx].x, path[idx].y, path[idx].d);
@@ -69,7 +70,7 @@ function moveGhostTowardsPacman(gh) {
     gh.y = nextCell.y;
 }
 
-function findPaths(start_x, start_y, end_x, end_y) {
+function findAllPaths(end_x, end_y) {
     path = [];
 
     // start from end
