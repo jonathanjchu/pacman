@@ -20,6 +20,11 @@ function moveGhostRandom(gh) {
 
 // move the given ghost towards pacman
 function moveGhostTowardsPacman(gh) {
+<<<<<<< HEAD
+=======
+    findAllPaths(pacman.x, pacman.y);
+    
+>>>>>>> refs/remotes/origin/master
     var idx = findCellInPath(gh.x, gh.y);
 
     if (idx != null) {
