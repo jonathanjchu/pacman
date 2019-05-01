@@ -57,6 +57,20 @@ div#blinky {
     position: absolute;
 }
 
+div#inky {
+    background: no-repeat center/27px url('img/inky.png');
+    width: 30px;
+    height: 30px;
+    position: absolute;
+}
+
+div#pinky {
+    background: no-repeat center/30px url('img/pinky.png');
+    width: 30px;
+    height: 30px;
+    position: absolute;
+}
+
 
 div#death {
     background: no-repeat center/30px url('img/boom.gif');

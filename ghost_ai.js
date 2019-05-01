@@ -1,50 +1,12 @@
 
 function moveGhosts() {
-    for (var i = 0; i < ghosts.length; i++) {
-        switch (ghosts[i].name) {
-            case "blinky":
-                moveGhostTowardsPacman(ghosts[i]);
-                break;
+    findAllPaths(pacman.x, pacman.y);
+    moveGhostTowardsPacman(ghosts.blinky);
+    moveClyde(ghosts.clyde);
+    moveInky(ghosts.inky);
 
-            case "clyde":
-                
-                moveGhostRandom(ghosts[i]);
-                //moveGhostTowardsPacman(ghosts[i]);
-                break;
-
-            case "inky":
-                break;
-
-            case "pinky":
-                break;
-        }
-    }
-
+    movePinky(ghosts.pinky);
 }
-
-// move the given ghost in the given direction
-// function moveGhost(gh, dir) {
-//     switch (dir) {
-//         case direction.UP:
-//             gh.y--;
-//             break;
-
-//         case direction.DOWN:
-//             gh.y++;
-//             break;
-
-//         case direction.LEFT:
-//             gh.x--;
-//             break;
-
-//         case direction.RIGHT:
-//             gh.x++;
-//             break;
-
-//         default:
-//             console.log("unknown direction " + dir);
-//     }
-// }
 
 // move the given ghost in a random direction
 function moveGhostRandom(gh) {
@@ -54,20 +16,90 @@ function moveGhostRandom(gh) {
 
     gh.x = availCells[rndNum].x;
     gh.y = availCells[rndNum].y;
-
-    //moveGhost(gh, availDirs[ranDir]);
 }
 
 // move the given ghost towards pacman
 function moveGhostTowardsPacman(gh) {
-    findAllPaths(pacman.x, pacman.y);
-    
     var idx = findCellInPath(gh.x, gh.y);
 
-    var nextCell = findAdjacentCellThatsCloser(path[idx].x, path[idx].y, path[idx].d);
+    if (idx != null) {
+        var nextCell = findCloserAdjacentCell(path[idx].x, path[idx].y, path[idx].d);
 
-    gh.x = nextCell.x;
-    gh.y = nextCell.y;
+        if (nextCell != null) {
+            gh.x = nextCell.x;
+            gh.y = nextCell.y;
+        }
+    }
+}
+
+function moveClyde(gh) {
+    var rnd = Math.random() * 60;
+    var time = Date.now() / 1000;
+
+    // console.log(time % rnd);
+    if (time % rnd < 10) {
+        moveGhostTowardsPacman(gh);
+    }
+    else {
+        moveGhostRandom(gh);
+    }
+}
+
+function moveInky(gh) {
+    var idx = findCellInPath(gh.x, gh.y);
+
+    var nextCell;
+    if (path[idx].d > 5) {
+        nextCell = findCloserAdjacentCell(path[idx].x, path[idx].y, path[idx].d);
+        gh.x = nextCell.x;
+        gh.y = nextCell.y;
+    }
+    else {
+        moveGhostRandom(gh);
+    }
+}
+
+// pinky tries to move to a location in front of pacman if possible
+function movePinky(gh) {
+    var p_x = pacman.x;
+    var p_y = pacman.y;
+    var pinkyOffset = 5;
+    switch (pacman.currentDirection) {
+        case direction.LEFT:
+            p_x -= pinkyOffset;
+            if (p_x < 0) {
+                p_x = 0;
+            }
+            break;
+
+        case direction.RIGHT:
+            p_x += pinkyOffset;
+            if (p_x > world[p_y].length) {
+                p_x = world[p_y].length - 1;
+            }
+            break;
+
+        case direction.UP:
+            p_y -= pinkyOffset;
+            if (p_y < 0) {
+                p_y = 0;
+            }
+            break;
+
+        case direction.DOWN:
+            p_y += pinkyOffset;
+            if (p_y > world.length) {
+                p_y = world.length - 1;
+            }
+            break;
+
+        default:
+            return;
+    }
+
+
+    findPinkyPaths(gh.x, gh.y, p_x, p_y);
+    moveGhostTowardsPacman(gh);
 }
 
 function findAllPaths(end_x, end_y) {
@@ -91,6 +123,26 @@ function findAllPaths(end_x, end_y) {
         //     break;
         // }
 
+        checkNextCells(path[i].x, path[i].y, path[i].d);
+    }
+}
+
+function findPinkyPaths(start_x, start_y, end_x, end_y) {
+    path = [];
+
+    // add destination cell
+    path.push({
+        x: end_x,
+        y: end_y,
+        d: 0
+    });
+
+    // go through every cell in path (path will grow whie traversing)
+    for (var i = 0; i < path.length; i++) {
+        if (path[i].x == start_x && path[i] == start_y) {
+            break;
+        }
+        // console.log("x: " + path[i].x + ", y: " + path[i].y + ", d: " + path[i].d);
         checkNextCells(path[i].x, path[i].y, path[i].d);
     }
 }
@@ -132,28 +184,28 @@ function getOpenAdjacentCells(x, y) {
 
     // console.log("x: " + x + ", y: " + y);
 
-    if (world[y + 1][x] != 2) {   // down
+    if (y + 1 < world.length && world[y + 1][x] != 2) {   // down
         openCells.push({
             x: x,
             y: (y + 1)
         });
     }
 
-    if (world[y - 1][x] != 2) {   // up
+    if (y > 0 && world[y - 1][x] != 2) {   // up
         openCells.push({
             x: x,
             y: (y - 1)
         });
     }
 
-    if (world[y][x - 1] != 2) {   // left
+    if (x > 0 && world[y][x - 1] != 2) {   // left
         openCells.push({
             x: (x - 1),
             y: y
         });
     }
 
-    if (world[y][x + 1] != 2) {   // right
+    if (x + 1 < world[y].length && world[y][x + 1] != 2) {   // right
         openCells.push({
             x: (x + 1),
             y: y
@@ -169,6 +221,8 @@ function findCellInPath(x, y) {
             return i;
         }
     }
+
+    return null;
 }
 
 // get an array of all the cells on the shortest path (mainly for debugging)
@@ -187,7 +241,7 @@ function getPathToTarget(x, y) {
 
 
     while (dist > 0) {
-        i = findAdjacentCellThatsCloser(path[i].x, path[i].y, path[i].d);
+        i = findCloserAdjacentCell(path[i].x, path[i].y, path[i].d);
 
         // console.log(path[i]);
         // console.log("i: " + i)
@@ -205,7 +259,7 @@ function getPathToTarget(x, y) {
     return shortestPath;
 }
 
-function findAdjacentCellThatsCloser(x, y, d) {
+function findCloserAdjacentCell(x, y, d) {
     let adjCells = getOpenAdjacentCells(x, y);
 
     // console.log(adjCells);
@@ -215,6 +269,20 @@ function findAdjacentCellThatsCloser(x, y, d) {
             if (path[i].x == adjCells[j].x
                 && path[i].y == adjCells[j].y
                 && path[i].d == d - 1) {
+                return path[i];
+            }
+        }
+    }
+}
+
+function findFurtherAdjacentCell(x, y, d) {
+    let adjCells = getOpenAdjacentCells(x, y);
+
+    for (var i = 0; i < path.length; i++) {
+        for (var j = 0; j < adjCells.length; j++) {
+            if (path[i].x == adjCells[j].x
+                && path[i].y == adjCells[j].y
+                && path[i].d == d + 1) {
                 return path[i];
             }
         }

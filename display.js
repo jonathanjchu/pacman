@@ -40,9 +40,10 @@ function displayPacman() {
 }
 
 function displayGhosts() {
-    for (var i = 0; i < ghosts.length; i++) {
-        document.getElementById(ghosts[i].name).style.top = ghosts[i].y * 30 + "px";
-        document.getElementById(ghosts[i].name).style.left = ghosts[i].x * 30 + "px";
+    var ghostNames = Object.keys(ghosts);
+    for (var i = 0; i < ghostNames.length; i++) {
+        document.getElementById(ghostNames[i]).style.top = ghosts[ghostNames[i]].y * 30 + "px";
+        document.getElementById(ghostNames[i]).style.left = ghosts[ghostNames[i]].x * 30 + "px";
     }
 }
 
