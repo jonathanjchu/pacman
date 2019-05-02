@@ -1,5 +1,6 @@
 # pacman
 ### simple version of pacman using javascript and html/css
+##### project for CodingDojo
 
 
 
