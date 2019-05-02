@@ -1,4 +1,5 @@
 var loopTimer = 400;
+var pacmanTimer = 300;
 var loop;
 
 const mapping = {
@@ -6,7 +7,7 @@ const mapping = {
     1: "coin",
     2: "brick",
     3: "cherry",
-    4: "warp"
+    6: "warp"
 };
 
 const direction = {
@@ -20,6 +21,7 @@ var world, pacman, ghosts;
 var score = 0;
 
 var isLifeResetLocked = false;
+var isPowerup = false;
 var path = [];
 
 function resetGame() {
@@ -134,27 +136,6 @@ function hideGhosts() {
     }
 }
 
-
-// function whichWayToPacman(gh) {
-//     var dirsToPac = [];
-
-//     if (pacman.y > gh.y) {
-//         dirsToPac.push(direction.DOWN);
-//     }
-//     else if (pacman.y < gh.y) {
-//         dirsToPac.push(direction.UP);
-//     }
-
-//     if (pacman.x < gh.x) {
-//         dirsToPac.push(direction.LEFT);
-//     }
-//     else if (pacman.x > gh.x) {
-//         dirsToPac.push(direction.RIGHT);
-//     }
-
-//     return dirsToPac;
-// }
-
 // checks if it is possible to move in direction dir from
 //  position x, y
 function canMoveDirection(x, y, dir) {
@@ -255,32 +236,36 @@ function loseLife() {
     }, 800);
 }
 
-// keyboard press
-document.onkeydown = function (e) {
+// // keyboard press
+// document.onkeydown = function (e) {
+//     // movePacman(e);
+// }
+
+function movePacman(dir) {
     // check if game is paused due to pacman death animation
     if (isLifeResetLocked)
         return;
 
     // collision detection and move pacman if allowed
-    if (e.keyCode == 37 &&  // left arrow
+    if (dir == direction.LEFT &&  // left arrow
         world[pacman.y][pacman.x - 1] != 2) {
         pacman.x--;
         document.getElementById("pacman").style.transform = "rotate(180deg)";
         pacman.currentDirection = direction.LEFT;
     }
-    else if (e.keyCode == 39 && // right arrow
+    else if (dir == direction.RIGHT && // right arrow
         world[pacman.y][pacman.x + 1] != 2) {
         pacman.x++;
         document.getElementById("pacman").style.transform = "rotate(0deg)";
         pacman.currentDirection = direction.RIGHT;
     }
-    else if (e.keyCode == 40 && // down arrow
+    else if (dir == direction.DOWN && // down arrow
         world[pacman.y + 1][pacman.x] != 2) {
         pacman.y++;
         document.getElementById("pacman").style.transform = "rotate(90deg)";
         pacman.currentDirection = direction.DOWN;
     }
-    else if (e.keyCode == 38 && // up arrow
+    else if (dir == direction.UP && // up arrow
         world[pacman.y - 1][pacman.x] != 2) {
         pacman.y--;
         document.getElementById("pacman").style.transform = "rotate(270deg)";
@@ -288,11 +273,11 @@ document.onkeydown = function (e) {
     }
 
     updatePacman();
-
 }
 
 function gameLoop() {
     if (!isLifeResetLocked) {
+        // kd.tick();
         updatePacman();
         updateGhosts();
     }
@@ -315,15 +300,13 @@ function updatePacman() {
     }
 
     // update score
-    if (world[pacman.y][pacman.x] == 1) {
+    if (world[pacman.y][pacman.x] == 1) {   // regular dot
         world[pacman.y][pacman.x] = 0;
         score += 10;
-        displayScore();
     }
-    else if (world[pacman.y][pacman.x] == 3) {
+    else if (world[pacman.y][pacman.x] == 3) {  // cherry
         world[pacman.y][pacman.x] = 0;
         score += 50;
-        displayScore();
     }
 
     // redraw
@@ -337,4 +320,16 @@ function updatePacman() {
 resetGame();
 
 
+// pacman movement timer (calls keydrown)
+setInterval(function() {
+    kd.tick();
+}, pacmanTimer);
 
+// kd.run(function() { kd.tick(); });
+
+// keydrown event handlers
+// kd.RIGHT.down(movePacman(direction.RIGHT));
+kd.RIGHT.down(function() { movePacman(direction.RIGHT); });
+kd.LEFT.down(function() { movePacman(direction.LEFT); });
+kd.UP.down(function() { movePacman(direction.UP); });
+kd.DOWN.down(function() { movePacman(direction.DOWN); });
