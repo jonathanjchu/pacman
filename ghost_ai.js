@@ -1,11 +1,36 @@
 
 function moveGhosts() {
-    findAllPaths(pacman.x, pacman.y);
-    moveGhostTowardsPacman(ghosts.blinky);
-    moveClyde(ghosts.clyde);
-    moveInky(ghosts.inky);
+    // create a mapping of all cells to pacman
+    if (!isPowerup) {
+        findAllPaths(pacman.x, pacman.y);
+    }
+    else {
+        findAllPaths(ghostHome.x, ghostHome.y)
+    }
 
-    movePinky(ghosts.pinky);
+    ghosts.forEach(function (gh) {
+        switch (gh.name) {
+            case ghostNames.BLINKY:
+                moveGhostTowardsPacman(gh);
+                break;
+
+            case ghostNames.INKY:
+                moveInky(gh);
+                break;
+
+            case ghostNames.CLYDE:
+                moveClyde(gh);
+                break;
+        }
+    });
+
+    // pinky must be called last
+    //  due to its different behavior the world needs to be remapped
+    movePinky(
+        ghosts.find(function (gh) {
+            return (gh.name == ghostNames.PINKY);
+        })
+    );
 }
 
 // move the given ghost in a random direction
@@ -28,10 +53,12 @@ function moveGhostTowardsPacman(gh) {
         if (nextCell != null) {
             gh.x = nextCell.x;
             gh.y = nextCell.y;
+            gh.d = nextCell.d;
         }
     }
 }
 
+// clyde sometimes moves towards pacman, sometimes moves randomly
 function moveClyde(gh) {
     var rnd = Math.random() * 60;
     var time = Date.now() / 1000;
@@ -45,6 +72,7 @@ function moveClyde(gh) {
     }
 }
 
+// inky moves towards pacman while far away, moves randomly when close to pacman
 function moveInky(gh) {
     var idx = findCellInPath(gh.x, gh.y);
 
@@ -97,8 +125,10 @@ function movePinky(gh) {
             return;
     }
 
+    if (!isPowerup) {
+        findPinkyPaths(gh.x, gh.y, p_x, p_y);
+    }
 
-    findPinkyPaths(gh.x, gh.y, p_x, p_y);
     moveGhostTowardsPacman(gh);
 }
 
@@ -116,13 +146,7 @@ function findAllPaths(end_x, end_y) {
 
     // go through every cell in path (path will grow whie traversing)
     for (var i = 0; i < path.length; i++) {
-        //console.log(path);
         // console.log("x: " + path[i].x + ", y: " + path[i].y + ", d: " + path[i].d);
-
-        // if (path[i].x == start_x && path[i] == start_y) {
-        //     break;
-        // }
-
         checkNextCells(path[i].x, path[i].y, path[i].d);
     }
 }
@@ -139,6 +163,10 @@ function findPinkyPaths(start_x, start_y, end_x, end_y) {
 
     // go through every cell in path (path will grow whie traversing)
     for (var i = 0; i < path.length; i++) {
+
+        // stop once first path is found
+        //  (may not be the shortest possible path, but my browser can't handle re-mapping the whole
+        //  world again)
         if (path[i].x == start_x && path[i] == start_y) {
             break;
         }

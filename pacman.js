@@ -1,13 +1,28 @@
-var loopTimer = 400;
-var pacmanTimer = 300;
+const defaultGhostTimer = 400;      // ghost movement timer in milliseconds
+const defaultPacmanTimer = 300;     // pacman movement timer in milliseconds
+const defaultPowerupDuration = 15;  // powerup duration in number of ghost movement loops
+const warningDuration = 8;
+const vulGhostMovementTimer = 500;
+
+var loopTimer = defaultGhostTimer;
+var pacmanTimer = defaultPacmanTimer;
 var loop;
+var remainingPowerupDuration;
 
 const mapping = {
-    0: "empty",
-    1: "coin",
-    2: "brick",
-    3: "cherry",
-    6: "warp"
+    EMPTY: 0,
+    DOT: 1,
+    WALL: 2,
+    CHERRY: 3,
+    POWERUP: 4,
+    WARP: 6
+
+    // 0: "empty",
+    // 1: "coin",
+    // 2: "brick",
+    // 3: "cherry",
+    // 4: "powerup",
+    // 6: "warp"
 };
 
 const direction = {
@@ -17,6 +32,19 @@ const direction = {
     RIGHT: 3
 }
 
+const ghostNames = {
+    BLINKY: "blinky",
+    INKY: "inky",
+    PINKY: "pinky",
+    CLYDE: "clyde"
+}
+
+const ghostStatus = {
+    NORMAL: 0,
+    VULNERABLE: 1,
+    DEAD: 2
+}
+
 var world, pacman, ghosts;
 var score = 0;
 
@@ -24,28 +52,33 @@ var isLifeResetLocked = false;
 var isPowerup = false;
 var path = [];
 
+var ghostHome = {
+    x: 20,
+    y: 10
+};
+
 function resetGame() {
     world = [
         [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
-        [2, 0, 1, 1, 1, 1, 1, 2, 1, 3, 1, 1, 1, 1, 1, 2, 1, 3, 1, 1, 1, 2, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2],
+        [2, 0, 1, 1, 1, 1, 1, 2, 1, 1, 1, 4, 1, 1, 1, 2, 1, 4, 1, 1, 1, 2, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2],
         [2, 1, 2, 2, 2, 2, 1, 1, 1, 2, 1, 2, 2, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 2, 1, 2, 2, 2, 2, 1, 2, 1, 2],
-        [2, 1, 1, 1, 2, 2, 1, 2, 1, 2, 1, 1, 2, 1, 1, 2, 1, 2, 1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 3, 1, 1, 2, 1, 2],
+        [2, 1, 1, 1, 2, 2, 1, 2, 1, 2, 1, 1, 2, 1, 1, 2, 1, 2, 1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 4, 1, 1, 2, 1, 2],
         [2, 1, 2, 1, 2, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 2, 2, 2, 2, 1, 2, 1, 2, 2, 1, 2],
         [2, 1, 2, 1, 1, 1, 2, 2, 2, 2, 1, 2, 2, 2, 2, 1, 2, 2, 1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 2],
-        [2, 1, 1, 1, 2, 1, 1, 2, 3, 1, 1, 1, 1, 2, 1, 1, 1, 2, 1, 1, 1, 2, 2, 1, 2, 2, 2, 1, 2, 1, 2, 2, 2, 2],
+        [2, 1, 1, 1, 2, 1, 1, 2, 4, 1, 1, 1, 1, 2, 1, 1, 1, 2, 1, 1, 1, 2, 2, 1, 2, 2, 2, 1, 2, 1, 2, 2, 2, 2],
         [2, 1, 2, 2, 2, 2, 1, 2, 1, 2, 2, 2, 1, 2, 2, 2, 1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2],
-        [2, 1, 3, 1, 1, 1, 1, 3, 1, 2, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 2, 2, 1, 2, 2, 3, 2, 2, 2, 2, 2, 3, 2],
-        [2, 2, 2, 2, 1, 2, 1, 2, 1, 2, 2, 2, 1, 2, 2, 2, 3, 2, 2, 2, 0, 2, 2, 1, 2, 1, 1, 1, 2, 2, 1, 1, 1, 2],
+        [2, 1, 4, 1, 1, 1, 1, 3, 1, 2, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 2, 2, 1, 2, 2, 4, 2, 2, 2, 2, 2, 4, 2],
+        [2, 2, 2, 2, 1, 2, 1, 2, 1, 2, 2, 2, 1, 2, 2, 2, 4, 2, 2, 2, 0, 2, 2, 1, 2, 1, 1, 1, 2, 2, 1, 1, 1, 2],
         [2, 1, 3, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 2, 2, 1, 2, 3, 2, 0, 0, 2, 1, 1, 1, 2, 1, 1, 1, 1, 2, 1, 2],
         [2, 1, 2, 2, 2, 1, 2, 2, 2, 2, 2, 1, 2, 1, 1, 1, 1, 1, 1, 2, 0, 0, 2, 2, 1, 2, 2, 2, 1, 2, 2, 2, 1, 2],
-        [2, 1, 1, 3, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 2],
+        [2, 1, 1, 4, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 2],
         [2, 1, 2, 1, 1, 1, 2, 1, 2, 2, 1, 2, 1, 2, 2, 3, 1, 1, 2, 1, 1, 1, 3, 1, 2, 1, 2, 1, 2, 1, 1, 1, 1, 2],
-        [2, 1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1, 1, 2, 2, 2, 1, 3, 1, 2, 2, 1, 2, 2, 1, 2, 2, 2, 1, 2, 1, 2, 2],
-        [2, 1, 2, 1, 2, 1, 2, 2, 1, 2, 2, 2, 1, 1, 1, 1, 1, 1, 2, 1, 1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 2, 3, 2, 2],
+        [2, 1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1, 1, 2, 2, 2, 1, 4, 1, 2, 2, 1, 2, 2, 1, 2, 2, 2, 1, 2, 1, 2, 2],
+        [2, 1, 2, 1, 2, 1, 2, 2, 1, 2, 2, 2, 1, 1, 1, 1, 1, 1, 2, 1, 1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 2, 4, 2, 2],
         [2, 1, 1, 1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 2, 2, 1, 2, 2, 2, 2, 1, 1, 1, 2, 1, 2, 1, 2, 1, 1, 3, 1, 1, 2],
-        [2, 1, 2, 1, 1, 1, 1, 3, 2, 2, 1, 2, 1, 1, 2, 1, 1, 1, 1, 1, 1, 2, 3, 1, 1, 2, 1, 2, 1, 2, 2, 2, 1, 2],
+        [2, 1, 2, 1, 1, 1, 1, 4, 2, 2, 1, 2, 1, 1, 2, 1, 1, 1, 1, 1, 1, 2, 4, 1, 1, 2, 1, 2, 1, 2, 2, 2, 1, 2],
         [2, 1, 2, 2, 2, 1, 2, 2, 2, 1, 1, 2, 2, 1, 2, 1, 2, 2, 1, 2, 1, 2, 2, 2, 1, 1, 1, 2, 1, 1, 1, 1, 1, 2],
-        [2, 1, 3, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 2, 1, 1, 3, 2, 2, 1, 2, 2],
+        [2, 1, 4, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 2, 1, 1, 4, 2, 2, 1, 2, 2],
         [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
     ];
 
@@ -88,52 +121,56 @@ function resetPacmanPostion() {
 }
 
 function resetGhostPosition() {
-    ghosts = {
-        blinky: {
+    ghosts = [
+        {
+            name: ghostNames.BLINKY,
             // x: 2,
             // y: 9
             x: 28,
             y: 16,
             // x: 20,
             // y: 10,
-            d: -1
+            d: -1,
+            status: ghostStatus.NORMAL
         },
-        clyde: {
+        {
+            name: ghostNames.CLYDE,
             x: 20,
             y: 10,
-            d: -1
+            d: -1,
+            status: ghostStatus.NORMAL
         },
-        inky:
         {
+            name: ghostNames.INKY,
             x: 1,
             y: 19,
-            d: -1
+            d: -1,
+            status: ghostStatus.NORMAL
         },
-        pinky:
         {
+            name: ghostNames.PINKY,
             // x: 5,
             // y: 5,
             x: 20,
             y: 11,
-            d: -1
+            d: -1,
+            status: ghostStatus.NORMAL
         }
-    };
+    ];
 
     showGhosts();
 }
 
 function showGhosts() {
-    var ghostNames = Object.keys(ghosts);
-    for (var i = 0; i < ghostNames.length; i++) {
-        document.getElementById(ghostNames[i]).style.display = "block";
-    }
+    ghosts.forEach(function (gh) {
+        document.getElementById(gh.name).style.display = "block";
+    });
 }
 
 function hideGhosts() {
-    var ghostNames = Object.keys(ghosts);
-    for (var i = 0; i < ghostNames.length; i++) {
-        document.getElementById(ghostNames[i]).style.display = "none";
-    }
+    ghosts.forEach(function (gh) {
+        document.getElementById(gh.name).style.display = "none";
+    });
 }
 
 // checks if it is possible to move in direction dir from
@@ -169,7 +206,6 @@ function availableDirections(x, y) {
     }
 
     if (world[y + 1][x] != 2) {
-        console.log("asdf");
         dirs.push(direction.DOWN);
     }
 
@@ -185,13 +221,21 @@ function availableDirections(x, y) {
 }
 
 // check if pacman is touching a ghost
-function isPacmanCollideWithGhost() {
-    var ghostCoords = Object.values(ghosts);
-    for (var i = 0; i < ghostCoords.length; i++) {
-        if (pacman.y == ghostCoords[i].y && pacman.x == ghostCoords[i].x)
-            return true;
-    }
-    return false;
+function isPacmanCollideWithGhost(gh) {
+    return (pacman.y == gh.y && pacman.x == gh.x);
+}
+
+function checkPacmanGhostCollision() {
+    ghosts.forEach(function (gh) {
+        if (isPacmanCollideWithGhost(gh)) {
+            if (!isPowerup) {
+                loseLife();
+            }
+            else {
+                eatGhost(gh);
+            }
+        }
+    });
 }
 
 function loseLife() {
@@ -236,11 +280,6 @@ function loseLife() {
     }, 800);
 }
 
-// // keyboard press
-// document.onkeydown = function (e) {
-//     // movePacman(e);
-// }
-
 function movePacman(dir) {
     // check if game is paused due to pacman death animation
     if (isLifeResetLocked)
@@ -280,6 +319,15 @@ function gameLoop() {
         // kd.tick();
         updatePacman();
         updateGhosts();
+
+        if (isPowerup) {
+            if (remainingPowerupDuration > 0) {
+                remainingPowerupDuration--;
+            }
+            else {
+                endPowerup();
+            }
+        }
     }
 }
 
@@ -288,26 +336,41 @@ function updateGhosts() {
     displayGhosts();
 
     // check ghost collision again (in case pacman is trying to swap positions)
-    if (isPacmanCollideWithGhost()) {
-        loseLife();
-    }
+    checkPacmanGhostCollision();
 }
 
 function updatePacman() {
     // check ghost collision again (in case pacman is trying to swap positions)
-    if (isPacmanCollideWithGhost()) {
-        loseLife();
-    }
+    checkPacmanGhostCollision();
 
     // update score
-    if (world[pacman.y][pacman.x] == 1) {   // regular dot
-        world[pacman.y][pacman.x] = 0;
-        score += 10;
+    switch (world[pacman.y][pacman.x]) {
+        case mapping.DOT:
+            world[pacman.y][pacman.x] = mapping.EMPTY;
+            score += 10;
+            break;
+
+        case mapping.CHERRY:
+            world[pacman.y][pacman.x] = mapping.EMPTY;
+            score += 50;
+            break;
+
+        case mapping.POWERUP:
+            world[pacman.y][pacman.x] = mapping.EMPTY;
+            score += 50;
+            beginPowerup();
+            break;
     }
-    else if (world[pacman.y][pacman.x] == 3) {  // cherry
-        world[pacman.y][pacman.x] = 0;
-        score += 50;
-    }
+
+    // if (world[pacman.y][pacman.x] == 1) {   // regular dot
+    //     world[pacman.y][pacman.x] = 0;
+    //     score += 10;
+    // }
+    // else if (world[pacman.y][pacman.x] == 3) {  // cherry
+    //     world[pacman.y][pacman.x] = 0;
+    //     score += 50;
+    //     beginPowerup();
+    // }
 
     // redraw
     displayPacman();
@@ -315,13 +378,39 @@ function updatePacman() {
     displayScore();
 }
 
+function beginPowerup() {
+    isPowerup = true;
+    remainingPowerupDuration = defaultPowerupDuration;
+    loopTimer = vulGhostMovementTimer;
+
+    // set ghost status to vulnerable (but only if it's not dead and not already vulnerable)
+    ghosts.forEach(function (gh) {
+        if (gh.status == ghostStatus.NORMAL) {
+            gh.status = ghostStatus.VULNERABLE;
+        }
+    });
+}
+
+function endPowerup() {
+    isPowerup = false;
+    ghosts.forEach(function (gh) {
+        gh.status = ghostStatus.NORMAL;
+    });
+
+    loopTimer = defaultGhostTimer;
+}
+
+function eatGhost(gh) {
+    gh.status = ghostStatus.DEAD;
+    score += 100;
+}
 
 // draw on initialization
 resetGame();
 
 
 // pacman movement timer (calls keydrown)
-setInterval(function() {
+setInterval(function () {
     kd.tick();
 }, pacmanTimer);
 
@@ -329,7 +418,7 @@ setInterval(function() {
 
 // keydrown event handlers
 // kd.RIGHT.down(movePacman(direction.RIGHT));
-kd.RIGHT.down(function() { movePacman(direction.RIGHT); });
-kd.LEFT.down(function() { movePacman(direction.LEFT); });
-kd.UP.down(function() { movePacman(direction.UP); });
-kd.DOWN.down(function() { movePacman(direction.DOWN); });
+kd.RIGHT.down(function () { movePacman(direction.RIGHT); });
+kd.LEFT.down(function () { movePacman(direction.LEFT); });
+kd.UP.down(function () { movePacman(direction.UP); });
+kd.DOWN.down(function () { movePacman(direction.DOWN); });

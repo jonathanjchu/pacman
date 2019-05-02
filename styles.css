@@ -29,11 +29,15 @@ div.brick {
 }
 
 div.coin {
-    background: no-repeat center/12px url('img/coin.png');
+    background: no-repeat center/8px url('img/dot.png');
 }
 
 div.cherry {
     background: no-repeat center/20px url('img/cherry.png');
+}
+
+div.powerup {
+    background: no-repeat center/15px url('img/powerup.png');
 }
 
 div#pacman {
