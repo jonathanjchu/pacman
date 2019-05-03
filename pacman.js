@@ -110,6 +110,12 @@ function resetGame() {
 }
 
 function gameOver() {
+    document.getElementById("end_text").innerHTML = "GAME OVER";
+    document.getElementById("gameover").style.display = "block";
+}
+
+function gameWon() {
+    document.getElementById("end_text").innerHTML = "YOU WON!!!";
     document.getElementById("gameover").style.display = "block";
 }
 
@@ -342,6 +348,10 @@ function updateGhosts() {
 function updatePacman() {
     // check ghost collision again (in case pacman is trying to swap positions)
     checkPacmanGhostCollision();
+    
+    if (isWon()) {
+        gameWon();
+    }
 
     // update score
     switch (world[pacman.y][pacman.x]) {
@@ -361,16 +371,6 @@ function updatePacman() {
             beginPowerup();
             break;
     }
-
-    // if (world[pacman.y][pacman.x] == 1) {   // regular dot
-    //     world[pacman.y][pacman.x] = 0;
-    //     score += 10;
-    // }
-    // else if (world[pacman.y][pacman.x] == 3) {  // cherry
-    //     world[pacman.y][pacman.x] = 0;
-    //     score += 50;
-    //     beginPowerup();
-    // }
 
     // redraw
     displayPacman();
@@ -403,6 +403,19 @@ function endPowerup() {
 function eatGhost(gh) {
     gh.status = ghostStatus.DEAD;
     score += 100;
+}
+
+function isWon() {
+    for (var i = 0; i < world.length; i++) {
+        for (var j = 0; j < world[i].length; j++) {
+            if (world[i][j] == mapping.DOT
+                || world[i][j] == mapping.CHERRY
+                || world[i][j] == mapping.POWERUP) {
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 // draw on initialization
